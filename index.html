@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>oído · adiviná la canción</title>
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0e1520">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2216%22 fill=%22%230e1520%22/%3E%3Ccircle cx=%2232%22 cy=%2232%22 r=%2219%22 fill=%22none%22 stroke=%22%238fd0be%22 stroke-width=%224%22 opacity=%22.38%22/%3E%3Ccircle cx=%2232%22 cy=%2232%22 r=%2210.5%22 fill=%22none%22 stroke=%22%238fd0be%22 stroke-width=%224%22 opacity=%22.72%22/%3E%3Ccircle cx=%2232%22 cy=%2232%22 r=%224.5%22 fill=%22%238fd0be%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ───────── Paleta y tipografía ─────────
+     Azul tinta de noche + verde celadón. Pensada para bajar el ruido visual:
+     pocos colores, mucho aire, un solo elemento protagonista (el botón que respira). */
+  :root{
+    --bg:#0e1520;
+    --bg-glow:rgba(120,196,178,.10);
+    --surface:#141d2a;
+    --surface-2:#192434;
+    --line:rgba(176,204,205,.12);
+    --line-strong:rgba(176,204,205,.22);
+    --text:#e5ecea;
+    --muted:#8797a0;
+    --faint:#5d6c77;
+    --accent:#8fd0be;
+    --accent-ink:#0b1a18;
+    --accent-soft:rgba(143,208,190,.13);
+    --accent-mid:rgba(143,208,190,.32);
+    --bad:#d6a0a0;
+    --bad-soft:rgba(214,160,160,.11);
+    --serif:'Fraunces',Georgia,'Times New Roman',serif;
+    --sans:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-lg:22px; --r-md:14px; --r-pill:999px;
+  }
+  @media (prefers-color-scheme:light){
+    :root{
+      --bg:#edf1f1;
+      --bg-glow:rgba(47,125,107,.10);
+      --surface:#f8fafa;
+      --surface-2:#eff3f3;
+      --line:rgba(28,48,52,.12);
+      --line-strong:rgba(28,48,52,.24);
+      --text:#1b2829;
+      --muted:#5f6f72;
+      --faint:#93a1a3;
+      --accent:#2e7a6a;
+      --accent-ink:#f4faf8;
+      --accent-soft:rgba(46,122,106,.10);
+      --accent-mid:rgba(46,122,106,.30);
+      --bad:#a85d5d;
+      --bad-soft:rgba(168,93,93,.09);
+    }
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; min-height:100dvh;
+    font-family:var(--sans); font-size:16px; line-height:1.5; color:var(--text);
+    background:
+      radial-gradient(900px 520px at 50% -8%, var(--bg-glow), transparent 70%),
+      var(--bg);
+    -webkit-font-smoothing:antialiased;
+  }
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  button,select,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:8px}
+
+  .app{max-width:560px; margin:0 auto; padding:22px 20px 0}
+
+  /* ───────── Cabecera ───────── */
+  .cab{display:flex; align-items:center; justify-content:space-between; gap:12px}
+  .marca{margin:0; font-family:var(--serif); font-weight:500; font-size:30px; letter-spacing:-.01em; display:flex; align-items:baseline; gap:3px}
+  .marca i{width:7px; height:7px; border-radius:50%; background:var(--accent); display:inline-block}
+  .acciones{display:flex; align-items:center; gap:8px}
+  .sel{position:relative}
+  .sel select{
+    appearance:none; -webkit-appearance:none;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-pill);
+    padding:9px 34px 9px 16px; font-size:14px; color:var(--text); max-width:220px;
+  }
+  .sel::after{
+    content:""; position:absolute; right:15px; top:50%; width:7px; height:7px;
+    border-right:1.5px solid var(--muted); border-bottom:1.5px solid var(--muted);
+    transform:translateY(-70%) rotate(45deg); pointer-events:none;
+  }
+  .icono{
+    width:40px; height:40px; display:grid; place-items:center;
+    background:var(--surface); border:1px solid var(--line); border-radius:50%; color:var(--muted);
+    transition:color .2s, border-color .2s;
+  }
+  .icono:hover{color:var(--text); border-color:var(--line-strong)}
+  .lema{margin:26px 0 0; text-align:center; color:var(--muted); font-size:15px}
+
+  /* ───────── Línea de tiempo (6 fragmentos) ───────── */
+  .linea{margin-top:26px}
+  .segs{display:flex; gap:6px}
+  .seg{flex:1; height:8px; border-radius:var(--r-pill); background:var(--line); position:relative; overflow:hidden; transition:background .4s}
+  .seg.on{background:var(--accent-mid)}
+  .seg i{position:absolute; inset:0 auto 0 0; width:0; background:var(--accent); border-radius:inherit}
+  .marcas{display:flex; gap:6px; margin-top:8px}
+  .marcas span{flex:1; text-align:center; font-size:12.5px; color:var(--faint); font-variant-numeric:tabular-nums; transition:color .4s}
+  .marcas span.on{color:var(--muted)}
+
+  /* ───────── Botón que respira ───────── */
+  .escena{position:relative; width:168px; height:168px; margin:24px auto 0; display:grid; place-items:center}
+  .anillo{position:absolute; inset:0; border-radius:50%; border:1px solid var(--accent); opacity:.35; animation:respirar 7s ease-in-out infinite}
+  .anillo.b{animation-delay:-3.5s}
+  .anillo.c{inset:-18px; border-color:var(--accent-mid); opacity:.2; animation-delay:-1.8s}
+  @keyframes respirar{
+    0%,100%{transform:scale(.86); opacity:.10}
+    50%{transform:scale(1.04); opacity:.38}
+  }
+  .escena.sonando .anillo{animation-duration:3.2s}
+  .escena.cargando .anillo{animation-duration:2.4s}
+  .play{
+    position:relative; width:96px; height:96px; border-radius:50%; border:0;
+    background:var(--accent); color:var(--accent-ink);
+    display:grid; place-items:center;
+    box-shadow:0 18px 40px -16px var(--accent-mid);
+    transition:transform .2s, opacity .3s;
+  }
+  .play:hover:not(:disabled){transform:scale(1.04)}
+  .play:active:not(:disabled){transform:scale(.97)}
+  .play:disabled{opacity:.35; cursor:default}
+  .play svg{width:34px; height:34px}
+  .play .i-stop{display:none}
+  .escena.sonando .i-play{display:none}
+  .escena.sonando .i-stop{display:block}
+  .pista{margin:14px 0 0; text-align:center; font-family:var(--serif); font-size:19px; font-weight:400; color:var(--text); min-height:30px}
+
+  .vol{display:flex; align-items:center; justify-content:center; gap:10px; margin-top:26px; color:var(--faint)}
+  .vol svg{width:16px; height:16px; flex:none}
+  .vol input{
+    -webkit-appearance:none; appearance:none; width:120px; height:3px; border-radius:3px;
+    background:var(--line-strong); outline-offset:6px;
+  }
+  .vol input::-webkit-slider-thumb{-webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--muted); border:0}
+  .vol input::-moz-range-thumb{width:14px; height:14px; border-radius:50%; background:var(--muted); border:0}
+
+  /* ───────── Intentos ───────── */
+  .intentos{display:grid; gap:8px; margin-top:28px}
+  .fila{
+    display:grid; grid-template-columns:22px 1fr auto; align-items:center; gap:12px;
+    padding:12px 16px; border:1px solid var(--line); border-radius:var(--r-md);
+    background:transparent; font-size:15px; min-height:48px;
+    transition:background .3s, border-color .3s;
+  }
+  .fila .ico{width:18px; height:18px; display:grid; place-items:center; color:var(--faint)}
+  .fila .ico svg{width:16px; height:16px}
+  .fila .txt{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--faint)}
+  .fila .t{font-size:13px; color:var(--faint); font-variant-numeric:tabular-nums}
+  .fila.actual{background:var(--accent-soft); border-color:var(--accent-mid)}
+  .fila.actual .txt{color:var(--muted)}
+  .fila.actual .t{color:var(--accent)}
+  .fila.mal{background:var(--bad-soft); border-color:transparent}
+  .fila.mal .ico,.fila.mal .t{color:var(--bad)}
+  .fila.mal .txt{color:var(--text)}
+  .fila.salto .txt{color:var(--muted); font-style:italic}
+  .fila.bien{background:var(--accent-soft); border-color:var(--accent-mid)}
+  .fila.bien .ico,.fila.bien .t{color:var(--accent)}
+  .fila.bien .txt{color:var(--text)}
+  .fila.sacude{animation:sacudir .35s}
+  @keyframes sacudir{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+  /* ───────── Entrada de respuesta ───────── */
+  #controles{margin-top:14px}
+  #post{margin-top:14px}
+  .campo{position:relative}
+  .campo input{
+    width:100%; padding:15px 18px; border-radius:var(--r-md);
+    background:var(--surface); border:1px solid var(--line-strong); color:var(--text); outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .campo input::placeholder{color:var(--faint)}
+  .campo input:focus{border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft)}
+  .sugs{
+    position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:20;
+    margin:0; padding:6px; list-style:none; max-height:320px; overflow:auto;
+    background:var(--surface-2); border:1px solid var(--line-strong); border-radius:var(--r-md);
+    box-shadow:0 24px 50px -20px rgba(0,0,0,.55);
+  }
+  .sugs li{display:flex; align-items:center; gap:12px; padding:8px 10px; border-radius:10px; cursor:pointer}
+  .sugs li[aria-selected="true"],.sugs li:hover{background:var(--accent-soft)}
+  .sugs img,.sugs .ph{width:38px; height:38px; border-radius:8px; object-fit:cover; background:var(--line); flex:none}
+  .sugs .tt{min-width:0}
+  .sugs .tt b{display:block; font-weight:500; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .sugs .tt span{display:block; font-size:13px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .vacio{padding:12px; color:var(--muted); font-size:14px}
+
+  .botones{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:14px 18px; border-radius:var(--r-md); border:1px solid var(--line-strong);
+    background:transparent; color:var(--text); font-weight:500; text-decoration:none;
+    transition:background .2s, border-color .2s, opacity .2s;
+  }
+  .btn:hover:not(:disabled){background:var(--surface-2)}
+  .btn small{color:var(--muted); font-weight:400; font-size:13px}
+  .btn.primario{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+  .btn.primario:hover:not(:disabled){background:var(--accent); opacity:.9}
+  .btn:disabled{opacity:.4; cursor:default}
+
+  /* ───────── Resultado ───────── */
+  #resultado{
+    width:min(400px,calc(100% - 32px)); padding:0; overflow:visible; border-radius:26px;
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.65);
+  }
+  #resultado[open]{animation:pop .55s cubic-bezier(.18,1.1,.3,1.12) both}
+  #resultado[open]::backdrop{animation:velo .4s ease both}
+  @keyframes pop{from{opacity:0; transform:translateY(28px) scale(.84)} to{opacity:1; transform:none}}
+  @keyframes velo{from{opacity:0} to{opacity:1}}
+  .res-in{padding:30px 24px 24px; text-align:center}
+  .res-in .veredicto{font-size:27px; margin:0; letter-spacing:-.01em}
+  .res-in .sub{margin:4px 0 0; color:var(--muted); font-size:14.5px}
+  .res-in .res-cab{margin-top:20px; padding:14px; background:var(--surface-2); border-radius:16px; text-align:left}
+  .insignia{
+    position:relative; width:68px; height:68px; margin:0 auto 16px; border-radius:50%;
+    display:grid; place-items:center; background:var(--accent); color:var(--accent-ink);
+    box-shadow:0 16px 34px -12px var(--accent-mid);
+  }
+  .insignia svg{width:34px; height:34px}
+  .insignia path{stroke-dasharray:1; stroke-dashoffset:0}
+  #resultado[open] .insignia path{animation:trazo .5s .3s cubic-bezier(.4,0,.2,1) both}
+  @keyframes trazo{from{stroke-dashoffset:1} to{stroke-dashoffset:0}}
+  #resultado.win .insignia::after{
+    content:""; position:absolute; inset:0; border-radius:50%; border:2px solid var(--accent);
+    animation:onda 1.3s .2s ease-out both;
+  }
+  #resultado.win .insignia::before{
+    content:""; position:absolute; inset:0; border-radius:50%; border:2px solid var(--accent);
+    animation:onda 1.3s .55s ease-out both;
+  }
+  @keyframes onda{from{transform:scale(1); opacity:.6} to{transform:scale(2.4); opacity:0}}
+  #resultado.lose .insignia{background:var(--bad-soft); color:var(--bad); box-shadow:none}
+  .res-cab{display:flex; gap:18px; align-items:center}
+  .portada{width:104px; height:104px; border-radius:14px; object-fit:cover; background:var(--surface-2); flex:none; display:grid; place-items:center; color:var(--faint)}
+  .portada svg{width:34px; height:34px}
+  .res-txt{min-width:0}
+  .veredicto{margin:0 0 6px; font-family:var(--serif); font-size:22px; font-weight:500; line-height:1.2}
+  .res-txt .tit{margin:0; font-weight:600; font-size:16px; overflow-wrap:anywhere}
+  .res-txt .art{margin:0; color:var(--muted); font-size:15px; overflow-wrap:anywhere}
+  .res-txt .meta{margin:4px 0 0; color:var(--faint); font-size:13px}
+  .res-bot{display:grid; gap:10px; margin-top:20px}
+
+  #errorBox{margin-top:24px; padding:22px; text-align:center; border:1px dashed var(--line-strong); border-radius:var(--r-lg)}
+  #errorBox p{margin:0 0 14px; color:var(--muted)}
+
+  /* ───────── Otros juegos ───────── */
+  .mas{margin-top:72px; padding:34px 0 96px; border-top:1px solid var(--line)}
+  .mas h2{margin:0; font-family:var(--serif); font-weight:500; font-size:20px}
+  .mas p{margin:6px 0 18px; color:var(--muted); font-size:14.5px}
+  .juegos{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px}
+  .juego{
+    display:flex; flex-direction:column; justify-content:center; gap:2px; text-align:left;
+    min-height:68px; padding:12px 16px; border-radius:var(--r-md);
+    border:1px solid var(--line-strong); background:var(--surface); color:var(--text); text-decoration:none;
+    transition:border-color .2s, background .2s;
+  }
+  a.juego:hover{border-color:var(--accent); background:var(--accent-soft)}
+  .juego b{font-weight:500; font-size:15px}
+  .juego span{font-size:13px; color:var(--muted)}
+  .juego.pronto{border-style:dashed; background:transparent; cursor:default}
+  .juego.pronto b{color:var(--faint)}
+
+  /* ───────── Estadísticas ───────── */
+  dialog{
+    width:min(420px,calc(100% - 32px)); padding:24px; color:var(--text);
+    background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--r-lg);
+  }
+  dialog::backdrop{background:rgba(6,10,16,.6); backdrop-filter:blur(3px)}
+  dialog h2{margin:0 0 18px; font-family:var(--serif); font-weight:500; font-size:22px}
+  .cifras{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; text-align:center}
+  .cifras b{display:block; font-family:var(--serif); font-size:26px; font-weight:500}
+  .cifras span{font-size:12.5px; color:var(--muted)}
+  .dist{margin:22px 0 0; display:grid; gap:6px}
+  .dist div{display:grid; grid-template-columns:44px 1fr; gap:10px; align-items:center; font-size:13px; color:var(--muted)}
+  .dist i{display:block; height:18px; min-width:18px; border-radius:6px; background:var(--accent-mid); color:var(--text); font-style:normal; font-size:12px; padding:0 7px; line-height:18px}
+  dialog form{margin-top:22px; text-align:right}
+
+  .enlace{margin-top:26px; padding:4px 0; background:none; border:0; color:var(--faint); font-size:13.5px; text-decoration:underline; text-underline-offset:3px}
+  .enlace:hover{color:var(--muted)}
+  dialog.diag{width:min(720px,calc(100% - 24px)); max-height:90dvh; overflow:auto}
+  .diag h2{margin-bottom:8px}
+  .diag-nota{margin:0 0 14px; color:var(--muted); font-size:14px}
+  .diag-cats{display:flex; flex-wrap:wrap; gap:8px 16px; margin-bottom:12px}
+  .chk{display:flex; align-items:center; gap:8px; font-size:14px; color:var(--muted); margin:6px 0}
+  .chk input{accent-color:var(--accent)}
+  .diag-acc{display:flex; gap:10px; margin:14px 0 8px}
+  .diag-acc .btn{padding:10px 16px}
+  .diag-estado{margin:4px 0 10px; font-size:14px; color:var(--muted); min-height:21px}
+  .diag-tabla{max-height:340px; overflow:auto; border:1px solid var(--line); border-radius:var(--r-md)}
+  .diag-tabla table{width:100%; border-collapse:collapse; font-size:13.5px}
+  .diag-tabla th,.diag-tabla td{padding:8px 12px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap}
+  .diag-tabla th{position:sticky; top:0; background:var(--surface-2); font-weight:500; color:var(--muted)}
+  .diag-tabla tr.sep td{background:var(--surface-2); color:var(--muted); font-weight:500}
+  .diag-tabla .bien{color:var(--accent)} .diag-tabla .mal{color:var(--bad)}
+  .diag-tabla td.num{font-variant-numeric:tabular-nums}
+  #diagLogica{margin-top:14px}
+  .diag-ping{margin:0 0 14px; padding:12px 14px; background:var(--surface-2); border-radius:var(--r-md); font:13.5px/1.7 var(--sans); white-space:pre-wrap; color:var(--muted)}
+  .diag-ping:empty{display:none}
+  @media (max-width:420px){
+    .marca{font-size:26px}
+    .sel select{max-width:160px}
+    .portada{width:84px; height:84px}
+    .botones{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important; transition:none !important}
+    .anillo{opacity:.2}
+    #resultado[open]::backdrop{animation:none}
+  }
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <header class="cab">
+    <h1 class="marca">oído<i></i></h1>
+    <div class="acciones">
+      <label class="sel">
+        <span class="sr">Estilo de música</span>
+        <select id="selCat"></select>
+      </label>
+      <button class="icono" id="btnStats" aria-label="Estadísticas">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-5"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <p class="lema">Seis fragmentos. Una canción.</p>
+
+  <main>
+    <section class="linea" aria-hidden="true">
+      <div class="segs" id="segs"></div>
+      <div class="marcas" id="marcas"></div>
+    </section>
+
+    <section aria-label="Reproductor">
+      <div class="escena cargando" id="escena">
+        <span class="anillo c"></span><span class="anillo"></span><span class="anillo b"></span>
+        <button class="play" id="btnPlay" aria-label="Reproducir fragmento" disabled>
+          <svg class="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+          <svg class="i-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="6.5" width="11" height="11" rx="2.5"/></svg>
+        </button>
+      </div>
+      <p class="pista" id="pista">Buscando una canción…</p>
+    </section>
+
+    <section id="controles" hidden>
+      <div class="campo">
+        <input id="entrada" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Escribí el título o el artista"
+               role="combobox" aria-expanded="false" aria-controls="sugs" aria-autocomplete="list">
+        <ul class="sugs" id="sugs" role="listbox" hidden></ul>
+      </div>
+      <div class="botones">
+        <button class="btn" id="btnSaltar" type="button">Saltar</button>
+        <button class="btn primario" id="btnAdivinar" type="button" disabled>Adivinar</button>
+      </div>
+    </section>
+
+    <section id="post" hidden>
+      <div class="botones">
+        <button class="btn" id="btnVer" type="button">Ver resultado</button>
+        <button class="btn primario" id="btnSig2" type="button">Siguiente canción</button>
+      </div>
+    </section>
+
+    <section id="errorBox" hidden>
+      <p>No pude conseguir una canción. Revisá tu conexión e intentá de nuevo.</p>
+      <button class="btn primario" id="btnReintentar" type="button">Reintentar</button>
+    </section>
+
+    <section class="intentos" id="intentos" aria-label="Intentos"></section>
+
+    <div class="vol">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>
+      <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8" aria-label="Volumen">
+    </div>
+  </main>
+
+  <!-- Espacio para los próximos juegos del mismo estilo.
+       Para sumar uno, editá OTROS_JUEGOS en el script (nombre, descripción y href). -->
+  <footer class="mas">
+    <h2>Más juegos</h2>
+    <p>Otros desafíos para entrenar la cabeza, uno a la vez.</p>
+    <div class="juegos" id="juegos"></div>
+    <button class="enlace" id="btnDiag" type="button">Comprobar la biblioteca de música</button>
+  </footer>
+</div>
+
+<p class="sr" id="vivo" aria-live="polite"></p>
+
+<dialog id="resultado" aria-labelledby="veredicto">
+  <div class="res-in">
+    <div class="insignia" id="insignia" aria-hidden="true"></div>
+    <p class="veredicto" id="veredicto"></p>
+    <p class="sub" id="resSub"></p>
+    <div class="res-cab">
+      <div class="portada" id="portada"></div>
+      <div class="res-txt">
+        <p class="tit" id="resTit"></p>
+        <p class="art" id="resArt"></p>
+        <p class="meta" id="resMeta"></p>
+      </div>
+    </div>
+    <div class="res-bot">
+      <button class="btn primario" id="btnSiguiente" type="button">Siguiente canción</button>
+      <a class="btn" id="btnYT" href="#" target="_blank" rel="noopener noreferrer">Escuchar la versión completa en YouTube</a>
+      <button class="btn" id="btnCerrar" type="button">Ver mis intentos</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgDiag" class="diag">
+  <h2>Comprobar la biblioteca</h2>
+  <p class="diag-nota">Consulta cada artista en las APIs y marca los que no devuelven canciones con avance de audio.</p>
+  <div class="diag-cats" id="diagCats"></div>
+  <div class="diag-acc">
+    <button class="btn primario" id="diagPing" type="button">1. Prueba de conexión</button>
+  </div>
+  <pre class="diag-ping" id="diagConexion"></pre>
+  <label class="chk"><input type="checkbox" id="diagMuestra" checked> Solo una muestra de 5 artistas por estilo (rápido)</label>
+  <label class="chk"><input type="checkbox" id="diagIt" checked> Incluir iTunes (unos 3,6 s por artista por el límite de la API)</label>
+  <label class="chk"><input type="checkbox" id="diagAudio"> Probar también que el audio cargue</label>
+  <div class="diag-acc">
+    <button class="btn primario" id="diagGo" type="button">2. Comprobar artistas</button>
+    <button class="btn" id="diagCopiar" type="button" disabled>Copiar problemas</button>
+  </div>
+  <p class="diag-estado" id="diagEstado"></p>
+  <div class="diag-tabla"><table id="diagTabla"></table></div>
+  <p class="diag-nota" id="diagLogica"></p>
+  <form method="dialog"><button class="btn" value="ok">Cerrar</button></form>
+</dialog>
+
+<dialog id="dlgStats">
+  <h2>Tu recorrido</h2>
+  <div class="cifras" id="cifras"></div>
+  <div class="dist" id="dist"></div>
+  <form method="dialog"><button class="btn" value="ok">Cerrar</button></form>
+</dialog>
+
+<script>
+(() => {
+'use strict';
+
+/* ════════════════════════════════════════════════════════════════
+   CONFIGURACIÓN
+   ════════════════════════════════════════════════════════════════ */
+const TIEMPOS = [0.1, 1, 3, 6, 9, 13];       // segundos de cada intento
+const MAX = TIEMPOS.length;
+const PAIS_ITUNES = 'AR';
+
+// Botones al pie. href:null = "Próximamente" (deshabilitado).
+const OTROS_JUEGOS = [
+  { nombre: 'Ojo', desc: 'Adiviná el artista de una obra', href: 'ojo.html' },
+  { nombre: 'Próximamente', desc: 'El siguiente juego', href: null },
+  { nombre: 'Próximamente', desc: 'El siguiente juego', href: null },
+];
+
+// Biblioteca: cada categoría combina artistas (búsqueda en iTunes y Deezer)
+// y, cuando existe, el ranking por género de Deezer.
+const CATEGORIAS = [
+  { id: 'mix', label: 'Mezcla total' },
+  { id: 'pop', label: 'Pop internacional', chart: 132, artistas: [
+    'Dua Lipa', 'Taylor Swift', 'The Weeknd', 'Ed Sheeran', 'Billie Eilish', 'Ariana Grande', 'Harry Styles',
+    'Bruno Mars', 'Adele', 'Olivia Rodrigo', 'Katy Perry', 'Lady Gaga', 'Justin Bieber', 'Rihanna', 'Coldplay',
+    'Miley Cyrus', 'Sabrina Carpenter', 'Imagine Dragons', 'Maroon 5', 'Lana Del Rey', 'Sia', 'Shawn Mendes',
+    'Charlie Puth', 'Camila Cabello', 'Selena Gomez', 'Lizzo', 'Sam Smith', 'Lewis Capaldi', 'Tate McRae',
+    'Charli XCX', 'Halsey', 'Meghan Trainor', 'Ellie Goulding', 'P!nk', 'Lorde' ] },
+  { id: 'rock', label: 'Rock', chart: 152, artistas: [
+    'Queen', 'Nirvana', 'Foo Fighters', 'AC/DC', 'Led Zeppelin', 'Red Hot Chili Peppers', 'Green Day',
+    'Arctic Monkeys', "Guns N' Roses", 'The Rolling Stones', 'Pink Floyd', 'Radiohead', 'Muse', 'Linkin Park',
+    'The Beatles', 'U2', 'Metallica', 'The Strokes', 'Oasis', 'Kings of Leon', 'Deep Purple', 'The Doors',
+    'Bon Jovi', 'Pearl Jam', 'Aerosmith', 'Black Sabbath', 'Iron Maiden', 'Fleetwood Mac', 'The Who',
+    'David Bowie', 'Tame Impala', 'The Black Keys', 'Paramore', 'Rage Against the Machine', 'System of a Down' ] },
+  { id: 'nac', label: 'Rock nacional argentino', artistas: [
+    'Soda Stereo', 'Gustavo Cerati', 'Charly García', 'Luis Alberto Spinetta', 'Fito Páez', 'Divididos',
+    'Los Fabulosos Cadillacs', 'Andrés Calamaro', 'Babasónicos', 'Las Pelotas', 'Los Piojos', 'La Renga',
+    'Attaque 77', 'Patricio Rey y sus Redonditos de Ricota', 'Sumo', 'Los Abuelos de la Nada',
+    'Bersuit Vergarabat', 'Intoxicados', 'Callejeros', 'Rata Blanca', 'Virus', 'Pappo', 'Enanitos Verdes',
+    'Illya Kuryaki and the Valderramas', 'Sandro', 'Los Auténticos Decadentes', 'Árbol', 'Ricardo Mollo',
+    'Los Gardelitos', 'Los Ratones Paranoicos', 'León Gieco', 'Pedro Aznar', 'Serú Girán', 'Miguel Mateos',
+    'Vicentico', 'Ciro y Los Persas', 'Las Pastillas del Abuelo', 'Airbag', 'Fabiana Cantilo',
+    'Los Violadores', 'Memphis La Blusera' ] },
+  { id: 'lat', label: 'Latino', artistas: [
+    'Bad Bunny', 'Shakira', 'Daddy Yankee', 'J Balvin', 'Karol G', 'Rosalía', 'Maluma', 'Luis Fonsi',
+    'Ricky Martin', 'Enrique Iglesias', 'Anitta', 'Rauw Alejandro', 'Feid', 'Peso Pluma', 'Juanes', 'Maná',
+    'Café Tacvba', 'Gloria Estefan', 'Carlos Vives', 'Don Omar', 'Wisin', 'Ozuna', 'Camilo',
+    'Natalia Lafourcade', 'Pedro Capó', 'Sebastián Yatra', 'Nicky Jam', 'Anuel AA', 'Myke Towers',
+    'Manuel Turizo', 'Romeo Santos', 'Marc Anthony', 'Celia Cruz', 'Luis Miguel', 'Juan Luis Guerra',
+    'Calle 13', 'Mon Laferte', 'Becky G' ] },
+  { id: 'urb', label: 'Urbano argentino', artistas: [
+    'Duki', 'Bizarrap', 'Nicki Nicole', 'Paulo Londra', 'María Becerra', 'Tini', 'Emilia', 'Khea', 'Trueno',
+    'Cazzu', 'Wos', 'L-Gante', 'Lali', 'Ysy A', 'Rels B', 'Nathy Peluso', 'Ca7riel', 'Milo J', 'Tiago PZK',
+    'Lit Killah', 'Neo Pistea', 'Callejero Fino', 'Dillom', 'Rusherking', 'Ke Personajes', 'Taichu', 'Cris MJ',
+    'Ecko', 'Lucho SSJ', 'Mesita', 'Kaleb Di Masi', 'Acru', 'Bhavi', 'Dani Ribba' ] },
+  { id: 'hip', label: 'Hip-hop y rap', chart: 116, artistas: [
+    'Eminem', 'Kendrick Lamar', 'Drake', 'Kanye West', 'Jay-Z', 'Travis Scott', '50 Cent', 'Snoop Dogg',
+    'Tyler, The Creator', 'Post Malone', 'Nicki Minaj', 'Cardi B', 'Lil Wayne', 'Outkast', 'Nas', '2Pac',
+    'The Notorious B.I.G.', 'J. Cole', 'Doja Cat', 'Dr. Dre', 'Lil Nas X', 'Future', '21 Savage',
+    'Megan Thee Stallion', 'Wu-Tang Clan', 'A Tribe Called Quest', 'Missy Elliott', 'Ice Cube', 'Mac Miller',
+    'Childish Gambino', 'Lauryn Hill', 'Juice WRLD' ] },
+  { id: 'ele', label: 'Electrónica', chart: 113, artistas: [
+    'Daft Punk', 'Calvin Harris', 'Avicii', 'David Guetta', 'Martin Garrix', 'Swedish House Mafia', 'deadmau5',
+    'The Chainsmokers', 'Kygo', 'Skrillex', 'Disclosure', 'Justice', 'Fatboy Slim', 'The Prodigy', 'Zedd',
+    'Marshmello', 'Alok', 'Tiësto', 'Eric Prydz', 'Rüfüs Du Sol', 'Gorillaz', 'The Chemical Brothers',
+    'Kraftwerk', 'Moby', 'Aphex Twin', 'Massive Attack', 'Flume', 'Porter Robinson', 'ODESZA', 'Röyksopp',
+    'Armin van Buuren', 'Diplo', 'Fred again..' ] },
+  { id: '80s', label: 'Años 80', artistas: [
+    'Michael Jackson', 'Madonna', 'Prince', 'a-ha', 'Duran Duran', 'Depeche Mode', 'Phil Collins',
+    'Cyndi Lauper', 'Wham!', 'Tears for Fears', 'Eurythmics', 'Whitney Houston', 'Culture Club',
+    'The Human League', 'Journey', 'Bruce Springsteen', 'Dire Straits', 'Talking Heads', 'The Cure',
+    'Simple Minds', 'Billy Idol', 'Hombres G', 'Los Prisioneros', 'Bryan Adams', 'Rick Astley', 'Toto',
+    'Pet Shop Boys', 'New Order', 'Kate Bush', 'Stevie Wonder', 'Lionel Richie', 'Blondie', 'INXS',
+    'Def Leppard', 'Mecano' ] },
+  { id: '90s', label: 'Años 90 y 2000', artistas: [
+    'Backstreet Boys', 'Spice Girls', 'Britney Spears', "Destiny's Child", 'Blur', 'Avril Lavigne',
+    'Blink-182', 'Nelly Furtado', 'Christina Aguilera', 'NSYNC', 'The Killers', 'Evanescence', 'Alicia Keys',
+    'Beyoncé', 'Lenny Kravitz', 'No Doubt', 'Mägo de Oz', 'La Oreja de Van Gogh', 'Jarabe de Palo',
+    'Alejandro Sanz', 'Chayanne', 'Thalía', 'Alanis Morissette', 'The Cranberries', 'TLC', 'Aqua',
+    'Ace of Base', 'Robbie Williams', 'Amy Winehouse', 'The White Stripes', 'Limp Bizkit', 'Nickelback',
+    'Jamiroquai', 'Savage Garden' ] },
+];
+
+/* ════════════════════════════════════════════════════════════════
+   UTILIDADES
+   ════════════════════════════════════════════════════════════════ */
+const $ = s => document.querySelector(s);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = s => (Number.isInteger(s) ? String(s) : s.toFixed(1)).replace('.', ',') + ' s';
+const quitaTildes = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const flat = s => quitaTildes(s).replace(/[^a-z0-9]/g, '');
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+// Normaliza un título para compararlo (sin tildes, sin (feat…), sin "- Remastered")
+function normTitulo(s = '') {
+  const n = quitaTildes(s)
+    .replace(/[\(\[].*?[\)\]]/g, ' ')
+    .split(' - ')[0]
+    .replace(/\b(feat|ft|featuring|with)\b.*$/, ' ')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9 ]+/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+  return n || String(s).toLowerCase().trim();
+}
+function listaArtistas(s = '') {
+  return quitaTildes(s)
+    .split(/,|&|\bfeat\.?\b|\bft\.?\b|\bx\b|\band\b|\by\b|\bwith\b/)
+    .map(t => t.replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+}
+function mismoArtista(a, b) {
+  const A = listaArtistas(a), B = listaArtistas(b);
+  return A.some(x => B.some(y => x === y || x.includes(y) || y.includes(x)));
+}
+function esCorrecta(g, real) {
+  if (normTitulo(g.titulo) !== normTitulo(real.titulo)) return false;
+  return !g.artista || mismoArtista(g.artista, real.artista);
+}
+const claveCancion = t => normTitulo(t.titulo) + '|' + (listaArtistas(t.artista)[0] || '');
+
+/* ════════════════════════════════════════════════════════════════
+   APIs de música (sin claves)
+   · iTunes Search API  → CORS abierto, previews de 30 s
+   · Deezer API         → se consulta por JSONP (no tiene CORS), previews de 30 s
+   ════════════════════════════════════════════════════════════════ */
+function fetchT(url, ms = 8000) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms);
+  return fetch(url, { signal: ctl.signal }).finally(() => clearTimeout(t));
+}
+
+function jsonp(url, ms = 8000) {
+  return new Promise((resolve, reject) => {
+    const cb = '__dz' + Math.random().toString(36).slice(2);
+    const s = document.createElement('script');
+    const limpiar = () => { clearTimeout(t); delete window[cb]; s.remove(); };
+    const t = setTimeout(() => { limpiar(); reject(new Error('timeout')); }, ms);
+    window[cb] = d => { limpiar(); resolve(d); };
+    s.onerror = () => { limpiar(); reject(new Error('error de red')); };
+    s.src = url + (url.includes('?') ? '&' : '?') + 'output=jsonp&callback=' + cb;
+    document.head.appendChild(s);
+  });
+}
+
+// Salud de cada API. iTunes limita a ~20 consultas por minuto por IP: al pasarse
+// responde 403 y todo lo que dependa de él falla hasta que pasa el minuto.
+const Salud = { itunes: { hasta: 0, llamadas: [] }, deezer: { hasta: 0 } };
+const itunesDisponible = (reserva = 0) => {
+  const ahora = Date.now();
+  Salud.itunes.llamadas = Salud.itunes.llamadas.filter(t => ahora - t < 60000);
+  return ahora >= Salud.itunes.hasta && Salud.itunes.llamadas.length < 16 - reserva;
+};
+const deezerDisponible = () => Date.now() >= Salud.deezer.hasta;
+
+const Itunes = {
+  async buscar(term, limit = 40, soloPreview = true, porArtista = false) {
+    Salud.itunes.llamadas.push(Date.now());
+    const u = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=${limit}&country=${PAIS_ITUNES}`
+      + (porArtista ? '&attribute=artistTerm' : '');
+    let j;
+    try {
+      const r = await fetchT(u);
+      if (!r.ok) { Salud.itunes.hasta = Date.now() + 60000; throw new Error('iTunes ' + r.status); }
+      j = await r.json();
+      Itunes.modo = 'fetch';
+    } catch (e) {
+      if (/^iTunes \d+/.test(e.message)) throw e;              // respuesta HTTP real: no se reintenta
+      // "Failed to fetch": bloqueo de CORS o de red. iTunes admite JSONP, que no depende de CORS.
+      try { j = await jsonp(u); Itunes.modo = 'jsonp'; }
+      catch (e2) { Salud.itunes.hasta = Date.now() + 20000; throw new Error(e.message + ' (JSONP: ' + e2.message + ')'); }
+    }
+    return (j.results || [])
+      .filter(x => x.trackName && (!soloPreview || x.previewUrl))
+      .map(x => ({
+        id: 'it:' + x.trackId,
+        titulo: x.trackName,
+        artista: x.artistName,
+        preview: x.previewUrl,
+        cover: (x.artworkUrl100 || '').replace('100x100bb', '600x600bb'),
+        thumb: x.artworkUrl60 || x.artworkUrl100 || '',
+        album: x.collectionName || '',
+        anio: (x.releaseDate || '').slice(0, 4),
+        fuente: 'iTunes',
+      }));
+  },
+};
+
+async function deezerJSON(url) {
+  let d;
+  try { d = await jsonp(url); }
+  catch (e) { Salud.deezer.hasta = Date.now() + 10000; throw e; }
+  if (d && d.error) {
+    Salud.deezer.hasta = Date.now() + 8000;
+    throw new Error('Deezer: ' + (d.error.message || d.error.type || 'error'));
+  }
+  return d || {};
+}
+
+const Deezer = {
+  map(x) {
+    return {
+      id: 'dz:' + x.id,
+      titulo: x.title_short || x.title,
+      artista: x.artist && x.artist.name,
+      preview: x.preview,
+      cover: x.album && (x.album.cover_xl || x.album.cover_big || x.album.cover_medium),
+      thumb: x.album && (x.album.cover_small || x.album.cover),
+      album: (x.album && x.album.title) || '',
+      anio: '',
+      fuente: 'Deezer',
+    };
+  },
+  async buscar(q, limit = 40, soloPreview = true) {
+    const d = await deezerJSON(`https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=${limit}`);
+    return (d.data || []).filter(x => x.title && (!soloPreview || x.preview)).map(Deezer.map);
+  },
+  async chart(genero) {
+    const d = await deezerJSON(`https://api.deezer.com/chart/${genero}/tracks?limit=100`);
+    return (d.data || []).filter(x => x.preview).map(Deezer.map);
+  },
+  // Busca al artista y trae sus temas más escuchados. Si no lo encuentra, cae a la búsqueda simple.
+  async deArtista(nombre, limit = 50) {
+    const f = flat(nombre);
+    try {
+      const d = await deezerJSON(`https://api.deezer.com/search/artist?q=${encodeURIComponent(nombre)}&limit=5`);
+      const lista = d.data || [];
+      const art = lista.find(x => flat(x.name) === f) || lista.find(x => flat(x.name).includes(f) || f.includes(flat(x.name)));
+      if (art) {
+        const t = await deezerJSON(`https://api.deezer.com/artist/${art.id}/top?limit=${limit}`);
+        const r = (t.data || []).filter(x => x.title && x.preview).map(Deezer.map);
+        r.forEach(x => { if (!x.artista) x.artista = art.name; x.confiable = true; });   // son temas de ese artista
+        if (r.length) return r;
+      }
+    } catch (e) { if (/^Deezer:/.test(e.message)) throw e; }
+    return Deezer.buscar(nombre, limit);
+  },
+};
+
+const NO_DESEADAS = /karaoke|tribute|made famous|originally performed|lullaby|8-bit|in the style of|cover version|instrumental version/i;
+
+/* ════════════════════════════════════════════════════════════════
+   ESTADO
+   ════════════════════════════════════════════════════════════════ */
+const S = {
+  cat: store.get('oido:cat', 'mix'),
+  fase: 'cargando',            // cargando | jugando | ganada | perdida | error
+  cancion: null,
+  intento: 0,
+  guesses: [],                 // {tipo:'mal'|'salto'|'bien', texto}
+  sonando: false,
+  ronda: 0,
+  jugadas: new Set(store.get('oido:jugadas', [])),
+};
+let audio = null;
+let vol = clamp(store.get('oido:vol', 0.8), 0, 1);
+let stats = store.get('oido:stats', { jugadas: 0, victorias: 0, racha: 0, mejor: 0, dist: [0,0,0,0,0,0] });
+
+/* ════════════════════════════════════════════════════════════════
+   OBTENER UNA CANCIÓN
+   ════════════════════════════════════════════════════════════════ */
+function categoriaElegida() {
+  if (S.cat !== 'mix') return CATEGORIAS.find(c => c.id === S.cat) || CATEGORIAS[1];
+  return pick(CATEGORIAS.filter(c => c.id !== 'mix'));
+}
+
+const shuffle = arr => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+};
+const cachePistas = new Map();   // artista -> canciones ya conseguidas
+const sinPistas = new Set();     // artistas que ninguna API devolvió con avance de audio
+const recientes = [];             // últimos artistas jugados, para no repetirlos seguido
+
+// Consulta Deezer e iTunes en paralelo para el mismo artista y junta los resultados.
+// Si una API falla o está bloqueada, la otra alcanza.
+async function pistasDeArtista(a) {
+  if (cachePistas.has(a)) return cachePistas.get(a);
+  const delArtista = r => r.filter(t => t.confiable || flat(t.artista).includes(flat(a)));
+  const tareas = [];
+  if (deezerDisponible()) tareas.push(Deezer.deArtista(a, 50).then(delArtista));
+  if (itunesDisponible(4)) tareas.push(Itunes.buscar(a, 50, true, true).then(delArtista));
+  if (!tareas.length) throw new Error('APIs ocupadas');
+  const res = await Promise.allSettled(tareas);
+  if (!res.some(r => r.status === 'fulfilled')) throw new Error('APIs con error');
+  const vistos = new Set(), lista = [];
+  for (const r of res) {
+    if (r.status !== 'fulfilled') continue;
+    for (const t of r.value) {
+      const k = claveCancion(t);
+      if (!vistos.has(k)) { vistos.add(k); lista.push(t); }
+    }
+  }
+  if (lista.length) cachePistas.set(a, lista); else sinPistas.add(a);
+  return lista;
+}
+
+async function candidatas(cat) {
+  if (cat.chart != null && (!cat.artistas || Math.random() < 0.35) && deezerDisponible()) {
+    try { const r = await Deezer.chart(cat.chart); if (r.length) return r; } catch (e) {}
+  }
+  if (!cat.artistas) return [];
+  let probados = 0;
+  // Se mezclan los artistas y los que sonaron hace poco quedan al final de la fila
+  let pool = cat.artistas.filter(x => !sinPistas.has(x));
+  // Si las APIs no tienen cupo en este momento, se juega con los artistas que ya están guardados
+  if (!deezerDisponible() && !itunesDisponible(4)) pool = pool.filter(x => cachePistas.has(x));
+  const orden = shuffle(pool).sort((x, y) => recientes.includes(x) - recientes.includes(y));
+  for (const a of orden) {
+    if (probados++ >= 4) break;                       // hasta 4 artistas por intento
+    try {
+      const r = await pistasDeArtista(a);
+      if (r.length) { recientes.push(a); if (recientes.length > 20) recientes.shift(); return r; }
+    } catch (e) {}
+  }
+  return [];
+}
+
+function cargarAudio(url) {
+  return new Promise((resolve, reject) => {
+    const a = new Audio();
+    a.preload = 'auto';
+    a.volume = vol;
+    const t = setTimeout(() => { a.src = ''; reject(new Error('timeout de audio')); }, 7000);
+    a.addEventListener('canplaythrough', () => { clearTimeout(t); resolve(a); }, { once: true });
+    a.addEventListener('error', () => { clearTimeout(t); reject(new Error('audio')); }, { once: true });
+    a.addEventListener('ended', () => detener());
+    a.src = url;
+    a.load();
+  });
+}
+
+async function obtenerCancion(ronda) {
+  for (let i = 0; i < 6; i++) {
+    if (ronda !== S.ronda) return null;
+    try {
+      const lista = shuffle((await candidatas(categoriaElegida()))
+        .filter(t => t.preview && t.titulo && t.artista)
+        .filter(t => !NO_DESEADAS.test(t.titulo + ' ' + t.album))
+        .filter(t => !S.jugadas.has(claveCancion(t))));
+      // Si el audio de una canción no carga, prueba con otras del mismo grupo
+      for (const cancion of lista.slice(0, 3)) {
+        try {
+          const a = await cargarAudio(cancion.preview);
+          if (ronda !== S.ronda) return null;
+          return { cancion, audio: a };
+        } catch (e) {}
+      }
+    } catch (e) {}
+  }
+  throw new Error('sin canciones');
+}
+
+async function nuevaRonda() {
+  detener();
+  const ronda = ++S.ronda;
+  if (audio) { audio.src = ''; audio = null; }
+  if (el.resultado.open) el.resultado.close();
+  Object.assign(S, { fase: 'cargando', cancion: null, intento: 0, guesses: [] });
+  limpiarEntrada();
+  render();
+  anunciar('Buscando una canción');
+  try {
+    const r = await obtenerCancion(ronda);
+    if (!r || ronda !== S.ronda) return;
+    S.cancion = r.cancion; audio = r.audio; S.fase = 'jugando';
+    S.jugadas.add(claveCancion(r.cancion));
+    store.set('oido:jugadas', [...S.jugadas].slice(-300));
+    render();
+    anunciar('Lista. Tenés 0,1 segundos para empezar');
+  } catch (e) {
+    if (ronda !== S.ronda) return;
+    S.fase = 'error';
+    render();
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   REPRODUCCIÓN
+   ════════════════════════════════════════════════════════════════ */
+let raf = 0, tmo = 0, tok = 0;
+const fin = () => S.fase === 'ganada' || S.fase === 'perdida';
+
+function posicionBarra(t) {
+  // Mapea el tiempo a la barra de 6 segmentos iguales (0..1)
+  const lim = [0, ...TIEMPOS];
+  for (let i = 0; i < MAX; i++) {
+    if (t < lim[i + 1]) return (i + (t - lim[i]) / (lim[i + 1] - lim[i])) / MAX;
+  }
+  return 1;
+}
+function pintarProgreso(pos) {
+  document.querySelectorAll('#segs .seg i').forEach((el, k) => {
+    el.style.width = clamp(pos * MAX - k, 0, 1) * 100 + '%';
+  });
+}
+
+function detener() {
+  tok++;
+  cancelAnimationFrame(raf); clearTimeout(tmo);
+  if (audio) { audio.pause(); try { audio.currentTime = 0; } catch {} }
+  const estaba = S.sonando;
+  S.sonando = false;
+  pintarProgreso(0);
+  if (estaba) render();
+}
+
+function sonar() {
+  if (!audio) return;
+  if (S.sonando) { detener(); return; }
+  const completo = fin();
+  const dur = completo ? null : TIEMPOS[S.intento];
+  const mi = ++tok;
+  try { audio.currentTime = 0; } catch {}
+  audio.volume = vol;
+  audio.play().then(() => {
+    if (mi !== tok) { audio.pause(); return; }
+    S.sonando = true; render();
+    const t0 = performance.now();
+    const paso = now => {
+      if (mi !== tok) return;
+      const e = (now - t0) / 1000;
+      if (dur != null) {
+        if (e >= dur) { detener(); return; }
+        pintarProgreso(posicionBarra(e));
+      } else {
+        pintarProgreso(clamp(audio.currentTime / (audio.duration || 30), 0, 1));
+      }
+      raf = requestAnimationFrame(paso);
+    };
+    raf = requestAnimationFrame(paso);
+    if (dur != null) tmo = setTimeout(() => { if (mi === tok) detener(); }, dur * 1000);
+  }).catch(() => { S.sonando = false; render(); });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   JUEGO
+   ════════════════════════════════════════════════════════════════ */
+function adivinar() {
+  if (S.fase !== 'jugando') return;
+  const txt = el.entrada.value.trim();
+  if (!txt) return;
+  const g = sel ? { titulo: sel.titulo, artista: sel.artista } : { titulo: txt, artista: '' };
+  const texto = sel ? `${sel.titulo} — ${sel.artista}` : txt;
+  const ok = esCorrecta(g, S.cancion);
+  S.guesses.push({ tipo: ok ? 'bien' : 'mal', texto });
+  limpiarEntrada();
+  if (ok) terminar(true);
+  else avanzar(true);
+}
+function saltar() {
+  if (S.fase !== 'jugando') return;
+  S.guesses.push({ tipo: 'salto', texto: 'Saltado' });
+  avanzar(false);
+}
+function avanzar(erro) {
+  detener();
+  if (S.intento >= MAX - 1) { terminar(false); return; }
+  S.intento++;
+  render();
+  if (erro) {
+    const f = el.intentos.children[S.intento - 1];
+    f && f.classList.add('sacude');
+  }
+  anunciar(`Ahora tenés ${fmt(TIEMPOS[S.intento])}`);
+  el.entrada.focus();
+}
+function terminar(gano) {
+  detener();
+  S.fase = gano ? 'ganada' : 'perdida';
+  stats.jugadas++;
+  if (gano) {
+    stats.victorias++; stats.racha++; stats.mejor = Math.max(stats.mejor, stats.racha);
+    stats.dist[S.intento]++;
+  } else stats.racha = 0;
+  store.set('oido:stats', stats);
+  render();
+  anunciar(gano ? '¡Acertaste!' : 'No era esa. Mirá cuál era');
+  const ronda = S.ronda;
+  setTimeout(() => { if (ronda === S.ronda && fin()) abrirResultado(); }, 380);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   AUTOCOMPLETADO (iTunes + Deezer en paralelo)
+   ════════════════════════════════════════════════════════════════ */
+let sel = null, sugs = [], sugIdx = -1, sugN = 0, sugT = 0;
+
+function limpiarEntrada() {
+  sel = null; sugs = []; sugIdx = -1; sugN++;
+  if (el.entrada) { el.entrada.value = ''; cerrarSugs(); el.btnAdivinar.disabled = true; }
+}
+function cerrarSugs() {
+  el.sugs.hidden = true; el.sugs.innerHTML = '';
+  el.entrada.setAttribute('aria-expanded', 'false');
+  sugIdx = -1;
+}
+function pintarSugs(vacia) {
+  if (!sugs.length) {
+    el.sugs.innerHTML = vacia ? '<li class="vacio" role="presentation">Sin resultados. Podés adivinar igual con lo que escribiste.</li>' : '';
+    el.sugs.hidden = !vacia;
+    return;
+  }
+  el.sugs.innerHTML = sugs.map((t, i) => `
+    <li role="option" id="sug${i}" data-i="${i}" aria-selected="${i === sugIdx}">
+      ${t.thumb ? `<img src="${esc(t.thumb)}" alt="" loading="lazy">` : '<span class="ph"></span>'}
+      <div class="tt"><b>${esc(t.titulo)}</b><span>${esc(t.artista)}</span></div>
+    </li>`).join('');
+  el.sugs.hidden = false;
+  el.entrada.setAttribute('aria-expanded', 'true');
+}
+async function buscarSugs(q) {
+  const n = ++sugN;
+  const [a, b] = await Promise.allSettled([
+    itunesDisponible(8) ? Itunes.buscar(q, 8, false) : Promise.resolve([]),
+    deezerDisponible() ? Deezer.buscar(q, 8, false) : Promise.resolve([]),
+  ]);
+  if (n !== sugN) return;
+  const A = a.status === 'fulfilled' ? a.value : [];
+  const B = b.status === 'fulfilled' ? b.value : [];
+  const vistos = new Set(), out = [];
+  for (let i = 0; i < Math.max(A.length, B.length) && out.length < 8; i++) {
+    for (const t of [A[i], B[i]]) {
+      if (!t || out.length >= 8) continue;
+      const k = claveCancion(t);
+      if (vistos.has(k)) continue;
+      vistos.add(k); out.push(t);
+    }
+  }
+  sugs = out; sugIdx = -1;
+  pintarSugs(true);
+}
+function elegirSug(i) {
+  const t = sugs[i]; if (!t) return;
+  sel = t;
+  el.entrada.value = `${t.titulo} — ${t.artista}`;
+  el.btnAdivinar.disabled = false;
+  cerrarSugs();
+  el.entrada.focus();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   RENDER
+   ════════════════════════════════════════════════════════════════ */
+const ICO = {
+  mal:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg>',
+  salto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 12h12"/></svg>',
+  bien:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  nota:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>',
+};
+
+function render() {
+  const jug = S.fase === 'jugando', cargando = S.fase === 'cargando', terminada = fin();
+
+  // Reproductor
+  el.escena.classList.toggle('cargando', cargando);
+  el.escena.classList.toggle('sonando', S.sonando);
+  el.btnPlay.disabled = !(jug || terminada);
+  el.btnPlay.setAttribute('aria-label', S.sonando ? 'Detener' : terminada ? 'Escuchar el avance de 30 segundos' : 'Reproducir fragmento');
+  el.pista.textContent =
+    cargando ? 'Buscando una canción…' :
+    S.fase === 'error' ? 'Sin conexión con la biblioteca' :
+    jug ? (S.sonando ? 'Escuchando…' : `Escuchá ${fmt(TIEMPOS[S.intento])}`) :
+    (S.sonando ? 'Escuchando el avance…' : 'Escuchá el avance de 30 s');
+
+  // Línea de tiempo
+  const lim = terminada ? MAX - 1 : S.intento;
+  el.segs.querySelectorAll('.seg').forEach((s, k) => s.classList.toggle('on', k <= lim));
+  el.marcas.querySelectorAll('span').forEach((s, k) => s.classList.toggle('on', k <= lim));
+
+  // Intentos
+  el.intentos.innerHTML = '';
+  for (let i = 0; i < MAX; i++) {
+    const g = S.guesses[i];
+    const d = document.createElement('div');
+    let clase = 'fila', ico = '', txt = '';
+    if (g) { clase += ' ' + g.tipo; ico = ICO[g.tipo]; txt = g.texto; }
+    else if (jug && i === S.intento) { clase += ' actual'; txt = '¿Qué canción es?'; }
+    d.className = clase;
+    d.innerHTML = `<span class="ico">${ico}</span><span class="txt">${esc(txt)}</span><span class="t">${fmt(TIEMPOS[i])}</span>`;
+    el.intentos.appendChild(d);
+  }
+
+  // Paneles
+  el.controles.hidden = !jug;
+  el.post.hidden = !terminada;
+  el.errorBox.hidden = S.fase !== 'error';
+  if (jug) {
+    if (S.intento < MAX - 1) {
+      const d = Math.round((TIEMPOS[S.intento + 1] - TIEMPOS[S.intento]) * 10) / 10;
+      el.btnSaltar.innerHTML = `Saltar <small>+${fmt(d)}</small>`;
+    } else el.btnSaltar.textContent = 'Rendirme';
+  }
+}
+
+function pintarResultado() {
+  const c = S.cancion, gano = S.fase === 'ganada';
+  el.resultado.classList.toggle('win', gano);
+  el.resultado.classList.toggle('lose', !gano);
+  el.insignia.innerHTML = gano
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path pathLength="1" d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path pathLength="1" d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>';
+  el.veredicto.textContent = gano
+    ? (S.intento === 0 ? '¡Con 0,1 s! Oído absoluto' : '¡Lo lograste!')
+    : 'Esta vez no era esa';
+  el.resSub.textContent = gano
+    ? `Acertaste en el intento ${S.intento + 1} de ${MAX}, con ${fmt(TIEMPOS[S.intento])}`
+    : 'La canción era:';
+  el.resTit.textContent = c.titulo;
+  el.resArt.textContent = c.artista;
+  el.resMeta.textContent = [c.album, c.anio].filter(Boolean).join(', ');
+  el.portada.innerHTML = c.cover
+    ? `<img src="${esc(c.cover)}" alt="Portada de ${esc(c.album || c.titulo)}" style="width:100%;height:100%;border-radius:14px;object-fit:cover">`
+    : ICO.nota;
+  el.btnYT.href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(`${c.artista} ${c.titulo}`);
+}
+
+function abrirResultado() {
+  if (!fin() || el.resultado.open) return;
+  pintarResultado();
+  el.resultado.showModal();
+  el.btnSiguiente.focus();
+}
+
+function anunciar(t) { el.vivo.textContent = t; }
+
+/* ════════════════════════════════════════════════════════════════
+   ESTADÍSTICAS
+   ════════════════════════════════════════════════════════════════ */
+function abrirStats() {
+  const pct = stats.jugadas ? Math.round(stats.victorias / stats.jugadas * 100) : 0;
+  $('#cifras').innerHTML = [
+    [stats.jugadas, 'Jugadas'], [pct + '%', 'Aciertos'], [stats.racha, 'Racha'], [stats.mejor, 'Mejor racha'],
+  ].map(([n, l]) => `<div><b>${n}</b><span>${l}</span></div>`).join('');
+  const max = Math.max(1, ...stats.dist);
+  $('#dist').innerHTML = stats.dist.map((n, i) =>
+    `<div><span>${fmt(TIEMPOS[i])}</span><i style="width:${Math.max(8, n / max * 100)}%">${n}</i></div>`).join('');
+  $('#dlgStats').showModal();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   INICIO
+   ════════════════════════════════════════════════════════════════ */
+const el = {
+  escena: $('#escena'), btnPlay: $('#btnPlay'), pista: $('#pista'), segs: $('#segs'), marcas: $('#marcas'),
+  intentos: $('#intentos'), controles: $('#controles'), entrada: $('#entrada'), sugs: $('#sugs'),
+  btnSaltar: $('#btnSaltar'), btnAdivinar: $('#btnAdivinar'), resultado: $('#resultado'),
+  veredicto: $('#veredicto'), resTit: $('#resTit'), resArt: $('#resArt'), resMeta: $('#resMeta'),
+  portada: $('#portada'), btnYT: $('#btnYT'), btnSiguiente: $('#btnSiguiente'),
+  errorBox: $('#errorBox'), vivo: $('#vivo'),
+  post: $('#post'), btnVer: $('#btnVer'), btnSig2: $('#btnSig2'), btnCerrar: $('#btnCerrar'),
+  insignia: $('#insignia'), resSub: $('#resSub'),
+};
+
+// Segmentos y marcas
+el.segs.innerHTML = TIEMPOS.map(() => '<div class="seg"><i></i></div>').join('');
+el.marcas.innerHTML = TIEMPOS.map(t => `<span>${fmt(t).replace(' s', 's')}</span>`).join('');
+
+// Categorías
+const selCat = $('#selCat');
+selCat.innerHTML = CATEGORIAS.map(c => `<option value="${c.id}">${esc(c.label)}</option>`).join('');
+if (!CATEGORIAS.some(c => c.id === S.cat)) S.cat = 'mix';
+selCat.value = S.cat;
+selCat.addEventListener('change', () => { S.cat = selCat.value; store.set('oido:cat', S.cat); nuevaRonda(); });
+
+// Volumen
+const volEl = $('#vol');
+volEl.value = vol;
+volEl.addEventListener('input', () => { vol = +volEl.value; if (audio) audio.volume = vol; store.set('oido:vol', vol); });
+
+// Otros juegos
+$('#juegos').innerHTML = OTROS_JUEGOS.map(j => j.href
+  ? `<a class="juego" href="${esc(j.href)}"><b>${esc(j.nombre)}</b><span>${esc(j.desc || '')}</span></a>`
+  : `<div class="juego pronto" aria-disabled="true"><b>${esc(j.nombre)}</b><span>${esc(j.desc || '')}</span></div>`
+).join('');
+
+// Eventos
+el.btnPlay.addEventListener('click', sonar);
+el.btnSaltar.addEventListener('click', saltar);
+el.btnAdivinar.addEventListener('click', adivinar);
+el.btnSiguiente.addEventListener('click', nuevaRonda);
+el.btnSig2.addEventListener('click', nuevaRonda);
+el.btnVer.addEventListener('click', abrirResultado);
+el.btnCerrar.addEventListener('click', () => el.resultado.close());
+el.resultado.addEventListener('click', e => { if (e.target === el.resultado) el.resultado.close(); });
+$('#btnReintentar').addEventListener('click', nuevaRonda);
+$('#btnStats').addEventListener('click', abrirStats);
+
+el.entrada.addEventListener('input', () => {
+  sel = null;
+  const q = el.entrada.value.trim();
+  el.btnAdivinar.disabled = !q;
+  clearTimeout(sugT);
+  if (q.length < 2) { sugN++; cerrarSugs(); return; }
+  sugT = setTimeout(() => buscarSugs(q), 260);
+});
+el.entrada.addEventListener('keydown', e => {
+  const abierta = !el.sugs.hidden && sugs.length;
+  if (e.key === 'ArrowDown' && abierta) { e.preventDefault(); sugIdx = (sugIdx + 1) % sugs.length; pintarSugs(); el.entrada.setAttribute('aria-activedescendant', 'sug' + sugIdx); }
+  else if (e.key === 'ArrowUp' && abierta) { e.preventDefault(); sugIdx = (sugIdx - 1 + sugs.length) % sugs.length; pintarSugs(); el.entrada.setAttribute('aria-activedescendant', 'sug' + sugIdx); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (abierta && sugIdx >= 0) elegirSug(sugIdx); else adivinar(); }
+  else if (e.key === 'Escape') cerrarSugs();
+});
+el.sugs.addEventListener('mousedown', e => {
+  const li = e.target.closest('li[data-i]');
+  if (li) { e.preventDefault(); elegirSug(+li.dataset.i); }
+});
+el.entrada.addEventListener('blur', () => setTimeout(cerrarSugs, 120));
+
+// Barra espaciadora = reproducir (si no estás escribiendo)
+document.addEventListener('keydown', e => {
+  if (e.code !== 'Space') return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (/INPUT|BUTTON|SELECT|A|TEXTAREA/.test(tag)) return;
+  e.preventDefault(); if (!el.btnPlay.disabled) sonar();
+});
+
+/* ════════════════════════════════════════════════════════════════
+   COMPROBACIÓN DE LA BIBLIOTECA
+   ════════════════════════════════════════════════════════════════ */
+const CASOS_LOGICA = [
+  // [título que elige el jugador, artista, título real, artista real, ¿debe contar como acierto?]
+  ['De Música Ligera', 'Soda Stereo', 'De Música Ligera - Remasterizado 2007', 'Soda Stereo', true],
+  ['Persiana Americana (Remasterizado)', 'Soda Stereo', 'Persiana Americana', 'Soda Stereo', true],
+  ['Mi Gente', 'J Balvin', 'Mi Gente (feat. Willy William)', 'J Balvin, Willy William', true],
+  ['Tusa', 'KAROL G', 'Tusa', 'Karol G & Nicki Minaj', true],
+  ['Despacito', 'Luis Fonsi', 'Despacito - Remix', 'Luis Fonsi & Daddy Yankee', true],
+  ['Entre Caníbales', 'Andrés Calamaro', 'Entre Caníbales - En Vivo', 'Calamaro', true],
+  ['Bzrp Music Sessions, Vol. 52', 'Bizarrap', 'Bzrp Music Sessions, Vol. 52', 'Bizarrap & Quevedo', true],
+  ['Oye Como Va', 'Santana', 'Oye Como Va', 'Carlos Santana', true],
+  ['Wannabe', 'Spice Girls', 'Wannabe', 'Spice Girls', true],
+  ['Mariposa Tecknicolor', 'Fito Páez', 'Lamento Boliviano', 'Los Enanitos Verdes', false],
+  ['Wanabee', 'Spice Girls', 'Wannabe', 'Spice Girls', false],
+];
+const dormir = ms => new Promise(r => setTimeout(r, ms));
+let diagCorriendo = false, diagParar = false, diagProblemas = [];
+
+function estadoDiag(f) {
+  const dzOk = f.dz && f.dz.ok > 0, itOk = f.it && f.it.ok > 0;
+  const probadas = [f.dz, f.it].filter(Boolean);
+  if (dzOk || itOk) {
+    if (f.audio === 'fallo') return ['El audio no carga', 'mal'];
+    return [dzOk && itOk ? 'Bien' : dzOk ? 'Bien (solo Deezer)' : 'Bien (solo iTunes)', 'bien'];
+  }
+  if (probadas.length && probadas.every(x => x.err)) return ['Error de red o límite', 'mal'];
+  return ['Sin canciones con avance', 'mal'];
+}
+
+async function diagnosticar() {
+  const ids = [...document.querySelectorAll('#diagCats input:checked')].map(i => i.value);
+  const cats = CATEGORIAS.filter(c => ids.includes(c.id) && c.artistas);
+  if (!cats.length) { $('#diagEstado').textContent = 'Elegí al menos un estilo.'; return; }
+  const conIt = $('#diagIt').checked, conAudio = $('#diagAudio').checked, muestra = $('#diagMuestra').checked;
+  const tabla = $('#diagTabla');
+  tabla.innerHTML = '<tr><th>Artista</th><th>Deezer</th><th>iTunes</th><th>Estado</th></tr>';
+  diagProblemas = []; diagParar = false; diagCorriendo = true;
+  $('#diagGo').textContent = 'Detener';
+  $('#diagCopiar').disabled = true;
+
+  const total = cats.reduce((n, c) => n + (muestra ? Math.min(5, new Set(c.artistas).size) : new Set(c.artistas).size), 0);
+  const motivos = new Map();
+  const porCat = {};
+  let hechos = 0, ultimoIt = 0;
+
+  for (const c of cats) {
+    const sep = document.createElement('tr'); sep.className = 'sep';
+    sep.innerHTML = `<td colspan="4">${esc(c.label)}</td>`; tabla.appendChild(sep);
+    porCat[c.label] = { bien: 0, mal: 0 };
+    const base = [...new Set(c.artistas)];
+    for (const a of (muestra ? shuffle(base).slice(0, 5) : base)) {
+      if (diagParar) break;
+      $('#diagEstado').textContent = `Comprobando ${++hechos} de ${total}: ${a}`;
+      const f = { dz: null, it: null, audio: null };
+      let url = null;
+      const delArtista = r => r.filter(t => t.confiable || flat(t.artista).includes(flat(a)));
+      try {
+        const r = await Deezer.deArtista(a, 50);
+        const m = delArtista(r).filter(t => t.preview);
+        f.dz = { tot: r.length, ok: m.length }; if (m[0]) url = m[0].preview;
+      } catch (e) { f.dz = { err: e.message }; }
+      if (conIt) {
+        const espera = 3600 - (Date.now() - ultimoIt);
+        if (espera > 0) await dormir(espera);
+        ultimoIt = Date.now();
+        try {
+          const r = await Itunes.buscar(a, 50, false, true);
+          const m = delArtista(r).filter(t => t.preview);
+          f.it = { tot: r.length, ok: m.length }; if (!url && m[0]) url = m[0].preview;
+        } catch (e) { f.it = { err: e.message }; }
+      } else await dormir(160);
+      if (conAudio && url) {
+        try { const au = await cargarAudio(url); au.src = ''; f.audio = 'ok'; } catch (e) { f.audio = 'fallo'; }
+      }
+      const [txt, clase] = estadoDiag(f);
+      porCat[c.label][clase]++;
+      if (clase === 'mal') {
+        diagProblemas.push(`${c.label}: ${a} (${txt})`);
+        for (const [n, x] of [['Deezer', f.dz], ['iTunes', f.it]]) {
+          if (!x) continue;
+          const m = x.err ? `${n}: ${x.err}` : x.tot === 0 ? `${n}: sin resultados` : x.ok === 0 ? `${n}: hay resultados pero sin avance de audio` : null;
+          if (m) motivos.set(m, (motivos.get(m) || 0) + 1);
+        }
+      }
+      const celda = x => !x ? '—' : x.err ? `<span class="mal" title="${esc(x.err)}">error: ${esc(String(x.err).slice(0, 26))}</span>` : `${x.ok} de ${x.tot}`;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${esc(a)}</td><td class="num">${celda(f.dz)}</td><td class="num">${celda(f.it)}</td><td class="${clase}">${esc(txt)}</td>`;
+      tabla.appendChild(tr);
+      tr.scrollIntoView({ block: 'nearest' });
+    }
+    if (diagParar) break;
+  }
+  const resumen = Object.entries(porCat).map(([k, v]) => `${k}: ${v.bien} bien, ${v.mal} con problemas`).join(' | ');
+  const top = [...motivos].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([m, n]) => `${m} (${n})`).join('; ');
+  if (top) diagProblemas.unshift('Motivos más frecuentes: ' + top);
+  $('#diagEstado').textContent = (diagParar ? 'Detenido. ' : 'Listo. ') + resumen + (top ? ' | Motivos más frecuentes: ' + top : '');
+  $('#diagCopiar').disabled = !diagProblemas.length;
+  $('#diagGo').textContent = 'Comprobar';
+  diagCorriendo = false;
+}
+
+async function pruebaConexion() {
+  const box = $('#diagConexion'), lineas = [];
+  $('#diagPing').disabled = true;
+  const paso = async (nombre, fn) => {
+    const t0 = performance.now();
+    box.textContent = lineas.join('\n') + (lineas.length ? '\n' : '') + nombre + ': probando…';
+    let r;
+    try { r = await fn(); } catch (e) { r = 'FALLA (' + e.message + ')'; }
+    lineas.push(`${nombre}: ${r} [${Math.round(performance.now() - t0)} ms]`);
+    box.textContent = lineas.join('\n');
+  };
+  const resumen = (r) => `${r.length} resultados, ${r.filter(x => x.preview).length} con avance de audio`;
+  let dzUrl = null, itUrl = null;
+  await paso('Deezer, búsqueda simple', async () => { const r = await Deezer.buscar('Queen', 25, false); dzUrl = (r.find(x => x.preview) || {}).preview; return resumen(r); });
+  await paso('Deezer, temas del artista', async () => { const r = await Deezer.deArtista('Queen', 25); if (!dzUrl && r[0]) dzUrl = r[0].preview; return resumen(r); });
+  await paso('Deezer, ranking de pop', async () => { const r = await Deezer.chart(132); if (!dzUrl && r[0]) dzUrl = r[0].preview; return `${r.length} canciones con avance`; });
+  await paso('iTunes, búsqueda', async () => { const r = await Itunes.buscar('Queen', 25, false, true); itUrl = (r.find(x => x.preview) || {}).preview; return resumen(r) + ` (vía ${Itunes.modo})`; });
+  if (dzUrl) await paso('Deezer, carga de audio', async () => { const a = await cargarAudio(dzUrl); a.src = ''; return 'carga bien'; });
+  if (itUrl) await paso('iTunes, carga de audio', async () => { const a = await cargarAudio(itUrl); a.src = ''; return 'carga bien'; });
+  lineas.push('\nCopiá estas líneas y pegalas en el chat.');
+  box.textContent = lineas.join('\n');
+  $('#diagPing').disabled = false;
+}
+$('#diagPing').addEventListener('click', pruebaConexion);
+
+function abrirDiag() {
+  $('#diagConexion').textContent = '';
+  $('#diagCats').innerHTML = CATEGORIAS.filter(c => c.artistas).map(c =>
+    `<label class="chk"><input type="checkbox" value="${c.id}" ${['nac','lat','urb','90s'].includes(c.id) ? 'checked' : ''}> ${esc(c.label)}</label>`).join('');
+  const fallos = CASOS_LOGICA.filter(([gt, ga, rt, ra, esp]) => esCorrecta({ titulo: gt, artista: ga }, { titulo: rt, artista: ra }) !== esp);
+  $('#diagLogica').textContent = fallos.length
+    ? `Comparación de respuestas: ${CASOS_LOGICA.length - fallos.length} de ${CASOS_LOGICA.length} casos bien. Fallan: ${fallos.map(f => f[0]).join(', ')}.`
+    : `Comparación de respuestas: ${CASOS_LOGICA.length} de ${CASOS_LOGICA.length} casos bien (tildes, remasterizados, feat. y colaboraciones).`;
+  $('#dlgDiag').showModal();
+}
+$('#btnDiag').addEventListener('click', abrirDiag);
+$('#diagGo').addEventListener('click', () => { if (diagCorriendo) diagParar = true; else diagnosticar(); });
+$('#diagCopiar').addEventListener('click', async () => {
+  const txt = diagProblemas.join('\n');
+  try { await navigator.clipboard.writeText(txt); }
+  catch (e) { const t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+  $('#diagEstado').textContent = 'Lista copiada. Pegala en el chat para revisarla.';
+});
+
+
+render();
+nuevaRonda();
+})();
+</script>
+</body>
+</html>
